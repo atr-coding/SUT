@@ -31,12 +31,13 @@ inline void make_file_struct() {
 #define TEST(condition) if((condition) == false) { std::cout << \"f:\" << __LINE__ << ':' << #condition << ';'; } count++;\n\
 #define TESTV(condition, v) if((condition) == false) { std::cout << \"f : \" << __LINE__ << ':' << #condition << \" (\" << v << \");\"; } count++;\n\
 #define END_TEST() std::cout << \"c:\" << count << ';'; return 1; }";
+		framework.close();
 	} else {
 		std::cout << "Unable to create framework file.\n";
 	}
 
 	// Create example config
-	std::ofstream config("/tests/includes/config");
+	std::ofstream config(p + "/tests/include/config", std::ios::trunc);
 	if (config.is_open()) {
 		config << "params:\n#-w\n#-g\n\ninclude_paths:\n#/path/\n\nlib_paths:\n#/path/\n\nlibs:\n#ssl\n#crypto\n#ws2_32";
 		config.close();
