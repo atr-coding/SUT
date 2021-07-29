@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <utility>
 #include <sstream>
+#include <fstream>
 
 inline int64_t get_last_modified_time(const char* file) {
 	struct stat result;
@@ -19,6 +20,16 @@ inline void make_file_struct() {
 	std::filesystem::create_directory(p + "/tests/bin");
 	std::filesystem::create_directory(p + "/tests/include");
 	std::filesystem::create_directory(p + "/tests/output");
+	std::ofstream framework(p + "/tests/include/framework.h", std::ios::trunc);
+	if (framework.is_open()) {
+		framework << "#pragma once\n#include <iostream>\n\
+#define BEGIN_TEST() int main() { uint16_t count = 0;\n\
+#define TEST(condition) if((condition) == false) { std::cout << \"f:\" << __LINE__ << ':' << #condition << ';'; } count++;\n\
+#define TESTV(condition, v) if((condition) == false) { std::cout << \"f : \" << __LINE__ << ':' << #condition << \" (\" << v << \");\"; } count++;\n\
+#define END_TEST() std::cout << \"c:\" << count << ';'; return 1; }";
+	} else {
+		std::cout << "Unable to create framework file.\n";
+	}
 }
 
 inline std::string exec(const char* cmd) {

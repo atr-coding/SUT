@@ -217,7 +217,7 @@ int main(int argc, char* argv[]) {
 				auto fails = parse_run_results(exec(p.string().c_str()));
 				std::stringstream ss;
 				ss << "<tr><td class=\"test\">" << p.filename().stem().string();
-				ss << "&emsp;&emsp;(" << (fails.count - fails.fail_cases.size()) << '/' << fails.count << ")</td><td class=\"icon\"><i class=\"material-icons\">check_circle</i></td></tr>";
+				ss << "&emsp;(" << (fails.count - fails.fail_cases.size()) << '/' << fails.count << ")</td><td class=\"icon\"><i class=\"material-icons\">check_circle</i></td></tr>";
 				html << ss.str();
 				ss.str("");
 				for (auto fail : fails.fail_cases) {
