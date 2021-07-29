@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <utility>
 #include <fstream>
+#include <unistd.h>
 
 #include "../include/buffer.h"
 #include "../include/misc.h"
@@ -59,6 +60,8 @@ auto getTestPrograms() {
 	return results;
 }
 
+// Compile a single test program
+
 bool compile(param_map& pmap, fs::path file) {
 	std::cout << "Compiling " << file.filename().string() << "...";
 	std::ostringstream ss;
@@ -71,6 +74,8 @@ bool compile(param_map& pmap, fs::path file) {
 		return false;
 	}
 }
+
+// Cleanup unused programs
 
 void cleanup() {
 	std::cout << "Cleaning up...\n";
@@ -111,15 +116,7 @@ void cleanup() {
 	}
 }
 
-/*
-Flags:
-m 	- create file structure
-c 	- compile new and changed tests
-ca 	- compile all test
-r 	- run tests
-ra	- run all tests
--cleanup - cleans up all test programs that no longer have a corresponding source file
-*/
+// Run result parsing
 
 struct FailCase {
 	std::string test;
@@ -159,15 +156,15 @@ int main(int argc, char* argv[]) {
 	bool c{ false };
 	bool ca{ false };
 	bool r{ false };
-	bool ra{ false };
+	//bool ra{ false };
 	bool o{ false };
 
 	if (argc >= 2) {
 		for (int i = 0; i < argc; i++) {
 			std::string arg = argv[i];
 			if (arg == "-m") {
-				std::cout << "Creating file structure in current directory...\n";
 				make_file_struct();
+				return 0;
 			} else if (arg == "-c") {
 				c = true;
 				ca = false;
@@ -176,10 +173,10 @@ int main(int argc, char* argv[]) {
 				c = false;
 			} else if (arg == "-r") {
 				r = true;
-				ra = false;
+				//ra = false;
 			} else if (arg == "-ra") {
-				ra = true;
-				r = false;
+				// ra = true;
+				// r = false;
 			} else if (arg == "-cleanup") {
 				cleanup();
 			} else if (arg == "-o") {
@@ -192,32 +189,63 @@ int main(int argc, char* argv[]) {
 		std::cout << "-c\t\t- compile new/changed tests\n";
 		std::cout << "-ca\t\t- compile all tests\n";
 		std::cout << "-r\t\t- run new/changed tests\n";
-		std::cout << "-ra\t\t- run all tests\n";
+		//std::cout << "-ra\t\t- run all tests\n";
 		std::cout << "-o\t\t- output result of tests to console and not the web\n";
 		std::cout << "-cleanup\t\t- cleanup tests that have been compiled, but whose source file has been delete.\n";
 	}
 
+	auto sources = getTestFiles();
+	auto programs = getTestPrograms();
+	cache_map cache = load_cache();
 
-	if (c) {
-	} else if (ca) {
-		auto files = getTestFiles();
-		for (auto f : files) {
-			compile(cparams, f);
+	// If compile from cache (c) is enabled and the cache is empty, call -ca instead
+	if (c && cache.size() == 0) {
+		c = false;
+		ca = true;
+	}
+
+	if (c) { // compile only new and changed source files
+
+		// Check for new tests that don't exist in the cache
+		for (auto s : sources) {
+			bool exists = false;
+			std::string file_name = s.filename().stem().string();
+			for (auto c : cache) {
+				if (file_name == c.file_name) {
+					exists = true;
+				}
+			}
+
+			// If the test file doesn't exist in cache, add it to the cache
+			if (!exists) {
+				cache.push_back(cache_data(file_name, get_last_modified_time(s.string().c_str()), true));
+			}
+		}
+
+		// Check for changed and new cached tests and (re)compile them
+		for (auto c : cache) {
+			if (c.changed) {
+				compile(cparams, "/tests/" + c.file_name + ".cpp");
+			}
+		}
+
+	} else if (ca) { // compile everything
+		cache.clear();
+		for (auto s : sources) {
+			cache.push_back(cache_data(s.filename().stem().string(), get_last_modified_time(s.string().c_str()), true));
+			compile(cparams, s);
 		}
 	}
 
 	if (r) {
-
-	} else if (ra) {
 		std::ofstream html("tests/output/index.html", std::ios::trunc);
 		if (html.is_open()) {
 			html << html_begin;
-			auto programs = getTestPrograms();
 			for (auto p : programs) {
 				auto fails = parse_run_results(exec(p.string().c_str()));
 				std::stringstream ss;
 				ss << "<tr><td class=\"test\">" << p.filename().stem().string();
-				ss << "&emsp;&emsp;(" << (fails.count - fails.fail_cases.size()) << '/' << fails.count << ")</td><td class=\"icon\"><i class=\"material-icons\">check_circle</i></td></tr>";
+				ss << "&emsp;(" << (fails.count - fails.fail_cases.size()) << '/' << fails.count << ")</td><td class=\"icon\"><i class=\"material-icons\">check_circle</i></td></tr>";
 				html << ss.str();
 				ss.str("");
 				for (auto fail : fails.fail_cases) {
@@ -236,4 +264,6 @@ int main(int argc, char* argv[]) {
 			std::cout << "tests/output/index.html failed to open.\n";
 		}
 	}
+
+	update_cache(cache);
 }
