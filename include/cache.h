@@ -35,9 +35,11 @@ typedef std::vector<cache_data> cache_map;
 
 inline void load_cache(cache_map& cache) {
 	// Load in cache
-	std::ifstream cache_file("cache", std::ios::binary);
+	std::ifstream cache_file("/tests/cache", std::ios::binary);
 	if (cache_file.is_open()) {
 		std::cout << "Loading cache.\n";
+
+		// Get cache file size
 		cache_file.seekg(0, std::ios::end);
 		uint64_t file_size = cache_file.tellg();
 		cache_file.seekg(0, std::ios::beg);
@@ -71,7 +73,7 @@ inline void load_cache(cache_map& cache) {
 }
 
 inline void update_cache(const cache_map& cache) {
-	std::ofstream cache_file("cache", std::ios::binary | std::ios::trunc);
+	std::ofstream cache_file("/tests/cache", std::ios::binary | std::ios::trunc);
 	if (cache_file.is_open()) {
 
 		// Allocate space for new cache file

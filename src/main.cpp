@@ -59,6 +59,8 @@ auto getTestPrograms() {
 	return results;
 }
 
+// Compile a single test program
+
 bool compile(param_map& pmap, fs::path file) {
 	std::cout << "Compiling " << file.filename().string() << "...";
 	std::ostringstream ss;
@@ -71,6 +73,8 @@ bool compile(param_map& pmap, fs::path file) {
 		return false;
 	}
 }
+
+// Cleanup unused programs
 
 void cleanup() {
 	std::cout << "Cleaning up...\n";
@@ -111,15 +115,7 @@ void cleanup() {
 	}
 }
 
-/*
-Flags:
-m 	- create file structure
-c 	- compile new and changed tests
-ca 	- compile all test
-r 	- run tests
-ra	- run all tests
--cleanup - cleans up all test programs that no longer have a corresponding source file
-*/
+// Run result parsing
 
 struct FailCase {
 	std::string test;
@@ -166,7 +162,6 @@ int main(int argc, char* argv[]) {
 		for (int i = 0; i < argc; i++) {
 			std::string arg = argv[i];
 			if (arg == "-m") {
-				std::cout << "Creating file structure in current directory...\n";
 				make_file_struct();
 			} else if (arg == "-c") {
 				c = true;
@@ -197,8 +192,12 @@ int main(int argc, char* argv[]) {
 		std::cout << "-cleanup\t\t- cleanup tests that have been compiled, but whose source file has been delete.\n";
 	}
 
+	cache_map cache;
+	load_cache(cache);
 
 	if (c) {
+
+
 	} else if (ca) {
 		auto files = getTestFiles();
 		for (auto f : files) {
@@ -236,4 +235,6 @@ int main(int argc, char* argv[]) {
 			std::cout << "tests/output/index.html failed to open.\n";
 		}
 	}
+
+	update_cache(cache);
 }

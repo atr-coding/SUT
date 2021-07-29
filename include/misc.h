@@ -15,11 +15,15 @@ inline int64_t get_last_modified_time(const char* file) {
 }
 
 inline void make_file_struct() {
+	std::cout << "Creating file structure in " << std::filesystem::current_path() << '\n';
+
 	std::string p = std::filesystem::current_path().string();
 	std::filesystem::create_directory(p + "/tests");
 	std::filesystem::create_directory(p + "/tests/bin");
 	std::filesystem::create_directory(p + "/tests/include");
 	std::filesystem::create_directory(p + "/tests/output");
+
+	// Create framework.h
 	std::ofstream framework(p + "/tests/include/framework.h", std::ios::trunc);
 	if (framework.is_open()) {
 		framework << "#pragma once\n#include <iostream>\n\
@@ -29,6 +33,13 @@ inline void make_file_struct() {
 #define END_TEST() std::cout << \"c:\" << count << ';'; return 1; }";
 	} else {
 		std::cout << "Unable to create framework file.\n";
+	}
+
+	// Create example config
+	std::ofstream config("/tests/includes/config");
+	if (config.is_open()) {
+		config << "params:\n#-w\n#-g\n\ninclude_paths:\n#/path/\n\nlib_paths:\n#/path/\n\nlibs:\n#ssl\n#crypto\n#ws2_32";
+		config.close();
 	}
 }
 
